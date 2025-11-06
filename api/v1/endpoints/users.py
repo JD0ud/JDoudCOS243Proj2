@@ -5,9 +5,16 @@ from sqlmodel import select
 
 router = APIRouter()
 
+users = [
+    {
+        "id": 1,
+        "name": "Antidisestablishmentarianism"
+    }
+]
+
 @router.get("/")
 def get_all_users(session:SessionDep):
-    users = session.exec(select(User).order_by(User.id))
+    # users = session.exec(select(User).order_by(User.id))
     return users
 
 @router.get("/{user_id}")
@@ -32,11 +39,13 @@ def edit_user(id:int, name:str, session:SessionDep):
     session.commit()
     return user
 
-@router.delete("/", status_code=200)
-def delete_user(id:int, session:SessionDep):
+@router.delete("/{user_id}", status_code=200)
+def delete_user(user_id:int, session:SessionDep):
     user = None
-    user = session.exec(select(User).where(User.id == id)).first()
+    # user = session.exec(select(User).where(User.id == user_id)).first()
+    user = users[user_id - 1] # TEST CODE
     if not user: raise HTTPException(status_code=404, detail="User not found")
-    session.delete(user)
+    # session.delete(user)
+    users.pop(user_id - 1) # TEST CODE
     session.commit()
     return user
