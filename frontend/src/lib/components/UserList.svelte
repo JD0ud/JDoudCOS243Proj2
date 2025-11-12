@@ -1,11 +1,18 @@
 <script lang="ts">
     import { onMount } from 'svelte';
     import User from './User.svelte'; //Import our user component
+    import { preprocess } from 'svelte/compiler';
 
     let loading = $state(false); //Controls whether or not the loading message is dispalyed or not
     let error = $state(null); //Controls if error message displayed
     
     let users: any[];
+    let userCount = $state("0");
+
+    let perPage = $state("10");
+    let perPageResults = $derived(parseInt(perPage));
+    let totalPages = $derived(Math.ceil(parseInt(userCount) / perPageResults));
+    let currentPage = $state("1");
 
     //When our page loads call fetch users
     onMount(() => {
@@ -18,10 +25,18 @@
         
         try {
             //Your url may be different than mine
-            const response = await fetch('http://127.0.0.1:8000/api/v1/users');
+            const response = await fetch(`http://127.0.0.1:8000/api/v1/users?perPage=${perPage}&curPage=${currentPage}`);
 
             if (!response.ok) throw new Error('Failed to fetch');
+                // let headers = await response;
+            
+                response.headers.forEach((value, key) => {
+                    console.log(`${key}: ${value}`);
+                });
+                userCount = response.headers.get('X-Total-Count');
                 users = await response.json();
+                // userCount = response.headers.get('X-Total-Count');
+                // console.log("|" + userCount + "|");
         } catch (e) {
             error = e.message;
         } finally {
@@ -40,9 +55,17 @@
             } catch (e) {
                 console.log("ERROR: " + e);
             } finally {
+                // if (parseInt(currentPage) > totalPages) currentPage = totalPages.toString();
                 refresh();
             }
         }
+    }
+
+    function goToPage(event: MouseEvent, page: number) {
+        event.preventDefault();
+        currentPage = page.toString();
+        console.log(currentPage);
+        refresh();
     }
 </script>
 
@@ -53,9 +76,33 @@
 {:else if error}
     <p>ERROR: {error}</p>
 {:else}
+    <label for="perPage">Page {currentPage} | Showing</label>
+    <select id="perPage" bind:value={perPage} onchange={refresh}>
+        <option id="perPage5" value="5">5</option>
+        <option id="perPage10" value="10" selected>10</option>
+        <option id="perPage20" value="20">20</option>
+        <option id="perPage50" value="50">50</option>
+        <option id="perPage100" value="100">100</option>
+    </select>
+    <label for="perPage">of {userCount} results</label>
+    <button onclick={refresh}>Refresh</button>
+    <br><br>
+
+    {#if currentPage <= "1"}
+        <button disabled>Prev</button>
+    {:else}
+        <button onclick={(e) => goToPage(e, parseInt(currentPage) - 1)}>Prev</button>
+    {/if}
+    {#each Array(totalPages).fill(0) as _, i}
+        <button style="margin: 0 8px" onclick={(e) => goToPage(e, i + 1)}>{i + 1}</button>
+    {/each}
+    {#if currentPage >= totalPages.toString()}
+        <button disabled>Next</button>
+    {:else}
+        <button onclick={(e) => goToPage(e, parseInt(currentPage) + 1)}>Next</button>
+    {/if}
+
     {#each users as user}
         <User id={user.id} name={user.name} onDelete={deleteUser} />
     {/each}
-    <br><br>
-    <button onclick={refresh}>Refresh</button>
 {/if}

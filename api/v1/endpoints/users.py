@@ -1,7 +1,7 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Response, Depends, status
 from db.models import User
 from db.session import SessionDep
-from sqlmodel import select
+from sqlmodel import select, func, Session
 
 router = APIRouter()
 
@@ -9,13 +9,55 @@ users = [
     {
         "id": 1,
         "name": "Antidisestablishmentarianism"
+    },
+    {
+        "id": 2,
+        "name": "Hippopotomonstrosesquippedaliophobia"
+    },
+    {
+        "id": 3,
+        "name": "Pneumonoultramicroscopicsilicovolcanoconiosis"
+    },
+    {
+        "id": 4,
+        "name": "Supercalifragilisticexpialidocious"
+    },
+    {
+        "id": 5,
+        "name": "Floccinaucinihilipilification"
+    },
+    {
+        "id": 6,
+        "name": "Pseudopseudohypoparathyroidism"
+    },
+    {
+        "id": 7,
+        "name": "Chargoggagoggmanchauggauggagoggchaubunagungamaugg"
+    },
+    {
+        "id": 8,
+        "name": "Thyroparathyroidectomized"
+    },
+    {
+        "id": 9,
+        "name": "Methylenedioxymethamphetamine"
+    },
+    {
+        "id": 10,
+        "name": "Electroencephalographically"
+    },
+    {
+        "id": 11,
+        "name": "Radioimmunoelectrophoresis"
     }
 ]
 
 @router.get("/")
-def get_all_users(session:SessionDep):
+def get_all_users(session:SessionDep, response:Response, perPage:int, curPage: int):
+    totalUsers = len(users)
+    response.headers["X-Total-Count"] = str(totalUsers)
     # users = session.exec(select(User).order_by(User.id))
-    return users
+    return users[perPage * (curPage - 1) : perPage * curPage]
 
 @router.get("/{user_id}")
 def get_user(user_id:int, session:SessionDep):

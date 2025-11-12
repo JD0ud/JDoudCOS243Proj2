@@ -17,10 +17,11 @@ app.include_router(api_router, prefix="/api/v1")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://127.0.0.1:5173", "http://localhost:8000"],  # frontend origin
+    allow_origins=["http://127.0.0.1:5173", "http://localhost:5173"],  # frontend origin
     allow_credentials=True,
     allow_methods=["*"],  # allow all HTTP methods
     allow_headers=["*"],  # allow all headers
+    expose_headers=["X-Total-Count", "x-total-count"]
 )
 
 #Define our routes

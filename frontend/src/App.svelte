@@ -7,7 +7,7 @@
 
 <main>
   <UserList />
-  <div>
+  <!-- <div>
     <a href="https://vite.dev" target="_blank" rel="noreferrer">
       <img src={viteLogo} class="logo" alt="Vite Logo" />
     </a>
@@ -27,7 +27,7 @@
 
   <p class="read-the-docs">
     Click on the Vite and Svelte logos to learn more
-  </p>
+  </p> -->
 </main>
 
 <style>
