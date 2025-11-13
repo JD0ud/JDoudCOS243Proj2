@@ -3,10 +3,41 @@
   import viteLogo from '/vite.svg'
   import Counter from './lib/Counter.svelte'
   import UserList from './lib/components/UserList.svelte';
+  import {currentRoute} from '../router.js';
+  import Home from './routes/Home.svelte';
+  import About from './routes/About.svelte';
+  import Users from './routes/Users.svelte';
+  import Admin from './routes/Admin.svelte';
+
+  let route = $derived($currentRoute);
+  
+  function getComponent(path) {
+    if (!path || path === '/') return Home;
+    if (path === '/about') return About;
+    if (path === '/users') return Users;
+    if (path === '/admin') return Admin;
+    return null;
+  }
+
+  let CurrentComponent = $derived(getComponent(route));
 </script>
 
+  
+
+
 <main>
-  <UserList />
+  <nav>
+  <a href="#/">Home</a>
+  <a href="#/users">Users</a>
+  <a href="#/about">About</a>
+  <a href="#/admin">Admin</a>
+</nav>
+
+{#if CurrentComponent}
+  <CurrentComponent />
+{:else}
+  <p>404 - Not Found</p>
+{/if}
   <!-- <div>
     <a href="https://vite.dev" target="_blank" rel="noreferrer">
       <img src={viteLogo} class="logo" alt="Vite Logo" />
@@ -30,7 +61,7 @@
   </p> -->
 </main>
 
-<style>
+<!-- <style>
   .logo {
     height: 6em;
     padding: 1.5em;
@@ -46,4 +77,4 @@
   .read-the-docs {
     color: #888;
   }
-</style>
+</style> -->

@@ -69,20 +69,18 @@
     }
 </script>
 
-<h1>Users</h1>
-
 {#if loading}
     <p>Loading...</p>
 {:else if error}
     <p>ERROR: {error}</p>
 {:else}
-    <label for="perPage">Page {currentPage} | Showing</label>
+    <label for="perPage">Showing</label>
     <select id="perPage" bind:value={perPage} onchange={refresh}>
-        <option id="perPage5" value="5">5</option>
-        <option id="perPage10" value="10" selected>10</option>
-        <option id="perPage20" value="20">20</option>
-        <option id="perPage50" value="50">50</option>
-        <option id="perPage100" value="100">100</option>
+        <option value="5">5</option>
+        <option value="10" selected>10</option>
+        <option value="20">20</option>
+        <option value="50">50</option>
+        <option value="100">100</option>
     </select>
     <label for="perPage">of {userCount} results</label>
     <button onclick={refresh}>Refresh</button>
@@ -94,7 +92,11 @@
         <button onclick={(e) => goToPage(e, parseInt(currentPage) - 1)}>Prev</button>
     {/if}
     {#each Array(totalPages).fill(0) as _, i}
-        <button style="margin: 0 8px" onclick={(e) => goToPage(e, i + 1)}>{i + 1}</button>
+        {#if i + 1 == parseInt(currentPage)}
+            <button style="margin: 0 8px" onclick={(e) => goToPage(e, i + 1)} disabled>{i + 1}</button>
+        {:else}
+            <button style="margin: 0 8px" onclick={(e) => goToPage(e, i + 1)}>{i + 1}</button>
+        {/if}
     {/each}
     {#if currentPage >= totalPages.toString()}
         <button disabled>Next</button>
