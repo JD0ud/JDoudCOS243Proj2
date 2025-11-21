@@ -14,6 +14,8 @@
     let totalPages = $derived(Math.ceil(parseInt(userCount) / perPageResults));
     let currentPage = $state("1");
 
+    let userSearchText = $state("");
+
     //When our page loads call fetch users
     onMount(() => {
         fetchUsers();
@@ -22,10 +24,10 @@
     async function fetchUsers() {
         loading = true; //Tell user we're loading! Notice that this will automatically update on becaause it's reactive.
         error = null;
-        
+
         try {
             //Your url may be different than mine
-            const response = await fetch(`http://127.0.0.1:8000/api/v1/users?perPage=${perPage}&curPage=${currentPage}`);
+            const response = await fetch(`http://127.0.0.1:8000/api/v1/users?perPage=${perPage}&curPage=${currentPage}&searchText=${userSearchText}`);
 
             if (!response.ok) throw new Error('Failed to fetch');
                 // let headers = await response;
@@ -67,6 +69,11 @@
         console.log(currentPage);
         refresh();
     }
+
+    function userSearch() {
+        currentPage = "1";
+        refresh();
+    }
 </script>
 
 {#if loading}
@@ -74,6 +81,9 @@
 {:else if error}
     <p>ERROR: {error}</p>
 {:else}
+    <label for="userSearch">Search:</label>
+    <input type="text" id="userSearch" bind:value={userSearchText} oninput={userSearch} />
+    <br><br>
     <label for="perPage">Showing</label>
     <select id="perPage" bind:value={perPage} onchange={refresh}>
         <option value="5">5</option>
