@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, Response, Depends, status
+from fastapi import APIRouter, HTTPException, Response, Depends, status, Form
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from db.models import User
 from db.session import SessionDep, get_session
@@ -27,15 +27,8 @@ class Token(BaseModel):
 class TokenData(BaseModel):
     username: str | None = None
 
-class User(BaseModel):
-    username: str
-    email: str | None = None
-    full_name: str | None = None
-    disabled: bool | None = None
-    hashed_password: str
-
-class UserInDB(User):
-    hashed_password: str
+# class UserInDB(User):
+#     hashed_password: str
 
 router = APIRouter()
 
@@ -107,18 +100,19 @@ def get_user(username:str):
     user = None
     for session in get_session():
         user = session.exec(select(User).where(User.username == username)).first()
+    if not user: return False
     return user
 
 def verify_password(plain_password, hashed_password):
+    print(plain_password, hashed_password, get_password_hash(plain_password))
     return password_hash.verify(plain_password, hashed_password)
 
 def get_password_hash(password):
     return password_hash.hash(password)
 
 def authenticate_user(username:str, password:str):
-    user = get_user(username)
-    if not user: return False
-    if not verify_password(password, user.hashed_password): return False
+    user = get_user(username=username)
+    if not user or not verify_password(password, user.hashed_password): return False
     return user
 
 def create_access_token(data:dict, expires_delta:timedelta | None = None):
@@ -156,14 +150,15 @@ async def get_current_active_user(current_user: Annotated[User, Depends(get_curr
     if current_user.disabled: raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
 
-@router.post("/token")
+@router.post("/token", response_model=Token)
 async def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()]) -> Token:
+    print("done")
     user = authenticate_user(form_data.username, form_data.password)
     if not user:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Incorrect username or password", headers={"WWW-Authenticate": "Bearer"})
     access_token_expires = timedelta(minutes = ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(data = {"sub": user.username}, expires_delta = access_token_expires)
-    return Token(access_token = access_token, token_type = "bearer")
+    return Token(access_token=access_token, token_type="bearer")
 
 @router.get("/me")
 async def read_users_me(current_user: Annotated[User, Depends(get_current_active_user)]):
@@ -173,14 +168,15 @@ async def read_users_me(current_user: Annotated[User, Depends(get_current_active
 def get_all_users(session:SessionDep, response:Response, perPage:int, curPage:int, searchText:str):
     offset = (curPage - 1) * perPage
     statement = select(User).where(col(User.username).ilike(f"%{searchText}")).order_by(User.id).offset(offset).limit(perPage)
-    totalUsers = session.query(statement).count()
-    response.headers["X-Total-Count"] = str(totalUsers)
+    # statement = select(User)
     # users = session.exec(select(User).order_by(User.id))
     users1 = session.exec(statement).all()
-    return statement
+    totalUsers = len(users1)
+    response.headers["X-Total-Count"] = str(totalUsers)
+    return users1
 
 @router.get("/{user_id}")
-def get_user(username:str, session:SessionDep):
+def find_user(username:str, session:SessionDep):
     user = None
     for session in get_session():
         user = session.exec(select(User).where(User.username == username)).first()
@@ -188,9 +184,8 @@ def get_user(username:str, session:SessionDep):
     return user
 
 @router.post("/", status_code=204)
-def create_new_user(user:User, name:str, session:SessionDep):
-    new_user = user
-    new_user.username = name
+def create_new_user(session:SessionDep, username:str = Form(...), email:str = Form(...), password:str = Form(...)):
+    new_user = User(username=username, hashed_password=get_password_hash(password), email=email, full_name=username, disabled=False)
     session.add(new_user)
     session.commit()
     return new_user
@@ -208,7 +203,7 @@ def delete_user(user_id:int, session:SessionDep):
     user = session.exec(select(User).where(User.id == user_id)).first()
     # user = users[user_id - 1] # TEST CODE
     if not user: raise HTTPException(status_code=404, detail="User not found")
-    # session.delete(user)
+    session.delete(user)
     # users.pop(user_id - 1) # TEST CODE
     session.commit()
     return user

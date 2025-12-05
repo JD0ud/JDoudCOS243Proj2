@@ -1,7 +1,8 @@
 <script lang="ts">
-    let {name, id/*, email*/, onDelete} = $props();
+    let {name, id, onDelete} = $props();
 </script>
-<h2>{name}</h2>
-<!-- <p>{email}</p> -->
+<div class="user">
+    <h2>{name}</h2>
 
-<button onclick={() => onDelete(id)}>Delete</button>
+    <button onclick={() => onDelete(id)}>Delete</button>
+</div>

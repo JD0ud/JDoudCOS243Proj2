@@ -42,8 +42,16 @@
 </nav>
 
 {#if CurrentComponent}
-  <CurrentComponent />
+  <div id="currentComponent">
+    <CurrentComponent />
+  </div>
 {:else}
   <p>404 - Not Found</p>
 {/if}
+
+<footer>
+  <a href="#/about">About</a>
+  <a href="#/admin">Admin Page (admins only (obviously))</a>
+</footer>
+
 </main>
